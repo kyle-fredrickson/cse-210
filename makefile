@@ -1,13 +1,13 @@
 BIN = bin
 
-test: $(BIN)/main
+test: $(BIN)/arith
 	@echo "Running tests..."
 	@./test.sh tests.txt
 
-run: $(BIN)/main
+run: $(BIN)/arith
 	@echo "Running..."
-	@./$(BIN)/main
+	@./$(BIN)/arith
 
-$(BIN)/main: language.hs
+$(BIN)/arith: language.hs
 	@mkdir -p $(BIN)
 	ghc language.hs -outputdir $(BIN) -o $(BIN)/arith

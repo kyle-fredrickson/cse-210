@@ -10,6 +10,7 @@ data Expr = IntExpr {n :: Integer}
           | MulExpr {l :: Expr, r :: Expr}
           | ExpExpr {l :: Expr, r :: Expr}
 
+
 -- Eval --
 eval :: Expr -> Integer
 eval (IntExpr n) = n
@@ -21,13 +22,11 @@ eval (ExpExpr b e) = eval b ^ eval e
 
 parse :: [Char] -> Expr
 parse s =
-    let l = parseToList s
-    in parseNum l
+    let l:r = parseToList s
+    in parseOp (IntExpr (read l :: Integer)) r
 
-parseNum :: [String] -> Expr
-parseNum [] = IntExpr 0
-parseNum [x] = IntExpr (read x :: Integer)
-parseNum (x:r) = parseOp (IntExpr (read x :: Integer)) r
+parseNum :: String -> Expr
+parseNum num = IntExpr (read num :: Integer)
 
 parseOp :: Expr -> [String] -> Expr
 parseOp left [] = left
@@ -36,20 +35,20 @@ parseOp left ("*":r) = parseMul left r
 parseOp left ("^":r) = parseExp left r
 
 parseAdd :: Expr -> [String] -> Expr
-parseAdd left r = AddExpr left (parseNum r)
+parseAdd left (num1:"*":num2:r) = AddExpr left (parseOp (MulExpr (parseNum num1) (parseNum num2)) r)
+parseAdd left (num1:"^":num2:r) = AddExpr left (parseOp (ExpExpr (parseNum num1) (parseNum num2)) r)
+parseAdd left (num:r) = parseOp (AddExpr left (parseNum num)) r
 
 parseMul :: Expr -> [String] -> Expr
-parseMul left (num:"+":r) = parseAdd (MulExpr left (parseNum [num])) r
-parseMul left right = MulExpr left (parseNum right)
+parseMul left (num1:"^":num2:r) = MulExpr left (parseOp (ExpExpr (parseNum num1) (parseNum num2)) r)
+parseMul left (num:r) = parseOp (MulExpr left (parseNum num)) r
 
 parseExp :: Expr -> [String] -> Expr
-parseExp left (num:"+":r) = parseAdd (ExpExpr left (parseNum [num])) r
-parseExp left (num:"*":r) = parseMul (ExpExpr left (parseNum [num])) r
-parseExp left right = ExpExpr left (parseNum right)
+parseExp left (num:r) = parseOp (ExpExpr left (parseNum num)) r
 
 -- Parser Parts --
 
-parseToList :: [Char] -> [[Char]]
+parseToList :: [Char] -> [String]
 parseToList s =
     let parsed_string = readP_to_S arithExpr s
     in if null parsed_string || snd (last parsed_string) /= ""
@@ -81,11 +80,19 @@ number = do
 
 arithOp :: ReadP [Char]
 arithOp =
-    string "*" <|>
     string "+" <|>
+    string "*" <|>
     string "^"
+
+-- Debugging Tools --
+
+exprToStr :: Expr -> [Char]
+exprToStr (IntExpr n) = show n
+exprToStr (AddExpr l r) = "(+ " ++ exprToStr l ++ " " ++ exprToStr r ++ ")"
+exprToStr (MulExpr l r) = "(* " ++ exprToStr l ++ " " ++ exprToStr r ++ ")"
+exprToStr (ExpExpr l r) = "(^ " ++ exprToStr l ++ " " ++ exprToStr r ++ ")"
 
 main :: IO ()
 main = do
     expr <- getLine
-    putStrLn "aaaaaahhh!"
+    (print . eval . parse) expr

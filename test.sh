@@ -1,11 +1,11 @@
 #! /bin/bash
 
-main=bin/main
+main=bin/arith
 
 function main() {
     file=$1
 
-    while IFS=$'\t' read -r input test; do
+    while IFS=$',' read -r input test; do
         output=$(./$main $input)
         if [ $output == $test ]; then
             passed="Passed"
