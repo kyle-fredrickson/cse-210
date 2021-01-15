@@ -1,5 +1,7 @@
 import Control.Applicative ( Alternative((<|>)) )
 import Data.Char
+import Data.List
+import Data.Maybe
 import Text.ParserCombinators.ReadP
 
 data AST = IntExpr {n :: Integer}
@@ -17,32 +19,24 @@ eval (ExpExpr b e) = eval b ^ eval e
 
 -- Parse to AST --
 
-parse :: [Char] -> AST
-parse s = let l:r = parseToList s
-    in parseOp (parseNum l) r
+precedence :: [String]
+precedence = ["+", "*", "^"]
 
-parseNum :: String -> AST
-parseNum num = IntExpr (read num :: Integer)
+parse :: [String] -> AST
+parse [num] = IntExpr (read num :: Integer)
+parse xs = reconstruct (splitOnLowestPrecedence xs)
 
-parseOp :: AST -> [String] -> AST
-parseOp left [] = left
-parseOp left ("+":r) = parseAdd left r
-parseOp left ("*":r) = parseMul left r
-parseOp left ("^":r) = parseExp left r
+reconstruct (l, "+", r) = AddExpr (parse l) (parse r)
+reconstruct (l, "*", r) = MulExpr (parse l) (parse r)
+reconstruct (l, "^", r) = ExpExpr (parse l) (parse r)
 
-parseAdd :: AST -> [String] -> AST
-parseAdd left (num1:"*":num2:r) = AddExpr left (parseOp (MulExpr (parseNum num1) (parseNum num2)) r)
-parseAdd left (num1:"^":num2:r) = AddExpr left (parseOp (ExpExpr (parseNum num1) (parseNum num2)) r)
-parseAdd left (num:r) = parseOp (AddExpr left (parseNum num)) r
+splitOnLowestPrecedence :: [String] -> ([String], String, [String])
+splitOnLowestPrecedence s = let idx = opIndices s
+    in (take idx s, s !! idx, drop (idx + 1) s)
 
-parseMul :: AST -> [String] -> AST
-parseMul left (num1:"^":num2:r) = MulExpr left (parseOp (ExpExpr (parseNum num1) (parseNum num2)) r)
-parseMul left (num:r) = parseOp (MulExpr left (parseNum num)) r
-
-parseExp :: AST -> [String] -> AST
-parseExp left (num:r) = parseOp (ExpExpr left (parseNum num)) r
-
--- Parser Parts --
+opIndices :: [String] -> Int
+opIndices s = let (Just (Just n)) = find isJust (map (\ x -> (findIndex (x ==) s)) precedence)
+    in n
 
 parseToList :: [Char] -> [String]
 parseToList s = let parsed_string = readP_to_S arithExpr s
@@ -90,4 +84,4 @@ exprToStr (ExpExpr l r) = "(^ " ++ exprToStr l ++ " " ++ exprToStr r ++ ")"
 main :: IO ()
 main = do
     expr <- getLine
-    (print . eval . parse) expr
+    (print . eval . parse . parseToList) expr

@@ -1,4 +1,5 @@
-bin/
+# Binaries
+arith
 
 dist
 dist-*
