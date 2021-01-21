@@ -16,6 +16,6 @@ load harness
   check '3 * 2 ^ 3 ^ 2 + -100' '1436'
 }
 
-@test "custom-4" {
+@test "custom-5" {
   check '3 * 2 ^ 3 ^ 2 + -100 * 2 ^ 3' '736'
 }
