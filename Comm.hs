@@ -3,12 +3,13 @@ import Text.ParserCombinators.ReadP
 
 import Arith ( ArithAST, arithEval, arithExpr, varStr )
 import Bool ( BoolAST, boolEval, boolExpr )
-import Gen ( braces )
+import Gen ( braces, brackets )
 
 data CommAST = SeqExpr {l :: CommAST, r :: CommAST}
              | WhileExpr { cond :: Bool.BoolAST, doComm :: CommAST}
              | IfExpr { cond :: Bool.BoolAST, ifComm :: CommAST, elseComm :: CommAST }
-             | AssignExpr { v :: String, val :: Arith.ArithAST}
+             | ArrAssignExpr { v :: String, i :: Arith.ArithAST, val :: Arith.ArithAST}
+             | VarAssignExpr { v :: String, val :: Arith.ArithAST}
              | Skip deriving Show
 
 -- Eval --
@@ -16,7 +17,8 @@ data CommAST = SeqExpr {l :: CommAST, r :: CommAST}
 commEval :: CommAST -> Map String Integer
 commEval n = let
     commEval' Skip store = store
-    commEval' (AssignExpr v val) store = insert v (arithEval val store) store
+    commEval' (VarAssignExpr v val) store = insert v (arithEval val store) store
+    commEval' (ArrAssignExpr v i val) store = insert (v ++ show (arithEval i store)) (arithEval val store) store
     commEval' (IfExpr cond ifC elseC) store =
         if boolEval cond store then
             commEval' ifC store
@@ -54,17 +56,29 @@ seqExpr = do
     return (SeqExpr c1 c2)
 
 statement :: ReadP CommAST
-statement = skip +++ assignExpr +++ ifExpr +++ whileExpr
+statement = skip +++ varAssignExpr +++ arrAssignExpr +++ ifExpr +++ whileExpr
 
-assignExpr :: ReadP CommAST
-assignExpr = do
+varAssignExpr :: ReadP CommAST
+varAssignExpr = do
     skipSpaces
     v <- varStr
     skipSpaces
     string ":="
     skipSpaces
     aExpr <- arithExpr
-    return (AssignExpr v aExpr)
+    return (VarAssignExpr v aExpr)
+
+arrAssignExpr :: ReadP CommAST
+arrAssignExpr = do
+    skipSpaces
+    v <- varStr
+    skipSpaces
+    i <- brackets arithExpr
+    skipSpaces
+    string ":="
+    skipSpaces
+    aExpr <- arithExpr
+    return (ArrAssignExpr v i aExpr)
 
 ifExpr :: ReadP CommAST
 ifExpr = do
@@ -109,7 +123,6 @@ format m = let
     format' [(x,y)] = x ++ " → " ++ show y
     format' ((x,y):xs) = x ++ " → " ++ show y ++ ", " ++ format' xs
     in "{" ++ format' (toList m) ++ "}"
-
 
 main :: IO ()
 main = do

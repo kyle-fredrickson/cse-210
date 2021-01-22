@@ -1,11 +1,6 @@
 # Binaries
 while
 
-# Testing Stuff
-bin/*
-libexec/*
-
-
 dist
 dist-*
 cabal-dev
