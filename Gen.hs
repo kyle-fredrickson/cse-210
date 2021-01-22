@@ -1,4 +1,4 @@
-module Gen ( parens ) where
+module Gen ( parens, braces ) where
 
 import Text.ParserCombinators.ReadP
     ( (+++), (<++), ReadP, char, string, many1, option, readP_to_S, satisfy, skipSpaces )
@@ -12,5 +12,16 @@ parens s = do
     p <- s
     skipSpaces
     paren2 <- char ')'
+    skipSpaces
+    return p
+
+braces :: ReadP b -> ReadP b
+braces s = do
+    skipSpaces
+    paren1 <- char '{'
+    skipSpaces
+    p <- s
+    skipSpaces
+    paren2 <- char '}'
     skipSpaces
     return p

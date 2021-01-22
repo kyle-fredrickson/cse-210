@@ -1,6 +1,6 @@
 module Bool
 ( BoolAST
-, bool
+, boolExpr
 , boolEval
 , boolParse
 , boolASTToStr
@@ -12,7 +12,7 @@ import Text.ParserCombinators.ReadP
     ( (+++), (<++), char, readP_to_S, skipSpaces, string, ReadP )
 
 import Gen ( parens )
-import Arith ( ArithAST, arithEval, arith, arithASTToStr )
+import Arith ( ArithAST, arithEval, arithExpr, arithASTToStr )
 
 data BoolAST = BoolExpr {op :: BoolOps, l :: BoolAST, r :: BoolAST}
              | ArithExpr {aop :: ArithOps, al :: ArithAST, ar :: ArithAST }
@@ -24,18 +24,20 @@ data BoolOps = Or
 
 boolOps :: [(BoolOps, Char)]
 boolOps = [
-    (Or,'v'),
-    (And,'^')
+    (Or,'∨'),
+    (And,'∧')
     ]
 
 data ArithOps = Eq
-              | Gt deriving Show
+              | Lt deriving Show
 
 arithOps :: [(ArithOps, Char)]
 arithOps = [
     (Eq,'='),
-    (Gt,'>')
+    (Lt,'<')
     ]
+
+-- Eval --
 
 boolEval :: BoolAST -> Map String Integer -> Bool
 boolEval (Bool n) _ = n
@@ -43,41 +45,45 @@ boolEval (NotExpr b) state = not (boolEval b state)
 boolEval (BoolExpr Or l r) state = boolEval l state || boolEval r state
 boolEval (BoolExpr And l r) state = boolEval l state && boolEval r state
 boolEval (ArithExpr Eq l r) state = arithEval l state == arithEval r state
-boolEval (ArithExpr Gt l r) state = arithEval l state > arithEval r state
+boolEval (ArithExpr Lt l r) state = arithEval l state < arithEval r state
 
 -- Parse --
 
 boolParse :: String -> BoolAST
-boolParse = fst . last . readP_to_S bool
+boolParse s = let (fst, snd) = (last . readP_to_S boolExpr) s
+    in if snd == "" then
+        fst
+    else
+        Bool False
 
-bool :: ReadP BoolAST
-bool = foldr (\(op,name) p ->
-    let this = p +++ do a <- p +++ parens bool
+boolExpr :: ReadP BoolAST
+boolExpr = foldr (\(op,name) p ->
+    let this = p +++ do a <- p +++ parens boolExpr
                         char name
                         BoolExpr op a <$> this
             in this)
-        ((parens arithExpr <++ arithExpr <++ boolean) +++ (notExpr <++ parens bool))
+        ((parens arithBoolExpr <++ arithBoolExpr <++ bool) +++ (notExpr <++ parens boolExpr))
             boolOps
 
-arithExpr :: ReadP BoolAST
-arithExpr = do
-    l <- arith
-    op <- char '=' <|> char '>'
-    r <- arith
+arithBoolExpr :: ReadP BoolAST
+arithBoolExpr = do
+    l <- arithExpr
+    op <- char '=' <|> char '<'
+    r <- arithExpr
     if op == '=' then
         return (ArithExpr Eq l r)
     else
-        return (ArithExpr Gt l r)
+        return (ArithExpr Lt l r)
 
 notExpr :: ReadP BoolAST
 notExpr = do
     skipSpaces
     char '¬'
     skipSpaces
-    NotExpr <$> bool
+    NotExpr <$> boolExpr
 
-boolean :: ReadP BoolAST
-boolean = do
+bool :: ReadP BoolAST
+bool = do
     skipSpaces
     s <- string "true" <|> string "false"
     skipSpaces
@@ -94,7 +100,7 @@ boolASTToStr (NotExpr b) = "(¬ " ++ boolASTToStr b ++ ")"
 boolASTToStr (BoolExpr Or l r) = "(v " ++ boolASTToStr l ++ " " ++ boolASTToStr r ++ ")"
 boolASTToStr (BoolExpr And l r) = "(^ " ++ boolASTToStr l ++ " " ++ boolASTToStr r ++ ")"
 boolASTToStr (ArithExpr Eq l r) = "(= " ++ arithASTToStr l ++ " " ++ arithASTToStr r ++ ")"
-boolASTToStr (ArithExpr Gt l r) = "(> " ++ arithASTToStr l ++ " " ++ arithASTToStr r ++ ")"
+boolASTToStr (ArithExpr Lt l r) = "(< " ++ arithASTToStr l ++ " " ++ arithASTToStr r ++ ")"
 
 main :: IO ()
 main = do

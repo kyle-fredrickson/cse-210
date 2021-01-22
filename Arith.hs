@@ -1,12 +1,13 @@
 module Arith
 ( ArithAST
-, arith
+, arithExpr
+, varStr
 , arithEval
 , arithParse
 , arithASTToStr
 ) where
 
-import Data.Char ( isDigit )
+import Data.Char ( isDigit, isAlpha, isAlphaNum )
 import Data.Map ( Map, lookup , empty)
 import Prelude hiding ( lookup )
 import Text.ParserCombinators.ReadP
@@ -31,6 +32,8 @@ arithOps = [
     (Exp,'^')
     ]
 
+-- Eval --
+
 arithEval :: ArithAST -> Map String Integer -> Integer
 arithEval (Int n) _ = n
 arithEval (Var v) state = varLookup (lookup v  state)
@@ -46,23 +49,31 @@ varLookup Nothing = 0
 -- Parse --
 
 arithParse :: String -> ArithAST
-arithParse = fst . last . readP_to_S arith
+arithParse s = let (fst, snd) = (last . readP_to_S arithExpr) s
+    in if snd == "" then
+        fst
+    else
+        Int 0
 
-arith :: ReadP ArithAST
-arith = foldr (\(op,name) p ->
-    let this = p +++ do a <- p +++ parens arith
+arithExpr :: ReadP ArithAST
+arithExpr = foldr (\(op,name) p ->
+    let this = p +++ do a <- p +++ parens arithExpr
                         char name
                         ArithExpr op a <$> this
             in this)
-        (number +++ var +++ parens arith)
+        (number +++ var +++ parens arithExpr)
             arithOps
 
 var :: ReadP ArithAST
-var = do
+var = do Var <$> varStr
+
+varStr :: ReadP String
+varStr = do
     skipSpaces
-    v <- many1 (satisfy (not . isDigit))
+    f <- satisfy isAlpha
+    v <- option "" (many1 (satisfy isAlphaNum))
     skipSpaces
-    return (Var v)
+    return (f : v)
 
 number :: ReadP ArithAST
 number = do
