@@ -5,6 +5,7 @@ while-ss
 /bin
 /libexec
 /tests
+test.sh
 
 dist
 dist-*
