@@ -1,5 +1,5 @@
-BIN = while
-FILE = Comm
+BIN = while-ss
+FILE = EvalCommBigStep
 
 $(BIN): $(FILE).hs
 	ghc $(FILE).hs -o $(BIN)
@@ -11,3 +11,4 @@ run: $(BIN)
 clean:
 	@rm *.hi
 	@rm *.o
+	@rm $(BIN)
