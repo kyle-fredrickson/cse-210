@@ -5,8 +5,8 @@ though I did consult https://en.wikibooks.org/wiki/Haskell/ParseExps to improve 
 Running the Program
 
 The main file of interest is Comm.hs, which implements the WHILE language with arrays,
-It can be compiled by running 'make' in the top level directory, and creates a binary called 'while' in the same directory.
-It can be run with the command 'make run', which will compile the executable if necessary and run it with './while'.
+It can be compiled by running 'make' in the top level directory, and creates a binary called 'while-ss' in the same directory.
+It can be run with the command 'make run', which will compile the executable if necessary and run it with './while-ss'.
 
 Testing
 
