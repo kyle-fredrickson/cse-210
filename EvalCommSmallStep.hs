@@ -11,7 +11,7 @@ import Gen ( braces, brackets )
 commEval :: CommAST -> Store -> (CommAST, Store)
 commEval Skip store = (Skip, store)
 commEval (VarAssignExpr v val) store = (Skip, insert v (arithEval val store) store)
--- commEval' (ArrAssignExpr v i val) store = .
+commEval (ArrAssignExpr v i val) store = (Skip, insert (v ++ show (arithEval i store)) (arithEval val store) store)
 commEval (IfExpr cond ifC elseC) store =
     if boolEval cond store then
         (ifC, store)
