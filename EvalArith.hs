@@ -2,7 +2,7 @@ module EvalArith
 ( arithEval
 , arithParse
 , Store
-, format
+, formatStore
 ) where
 
 import Data.Map ( Map, lookup , empty, toList )
@@ -25,8 +25,8 @@ variableLookup :: Maybe Integer -> Integer
 variableLookup (Just n) = n
 variableLookup Nothing = 0
 
-format :: Store -> String
-format m = let
+formatStore :: Store -> String
+formatStore m = let
     format' [] = ""
     format' [(x,y)] = x ++ " → " ++ show y
     format' ((x,y):xs) = x ++ " → " ++ show y ++ ", " ++ format' xs

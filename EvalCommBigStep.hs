@@ -2,7 +2,7 @@ import Data.Map ( Map, empty, insert, toList )
 import Text.ParserCombinators.ReadP
 
 import ParseComm ( CommAST (..), commParse )
-import EvalArith ( arithEval, Store, format )
+import EvalArith ( arithEval, Store, formatStore )
 import EvalBool ( boolEval )
 import Gen ( braces, brackets )
 
@@ -29,4 +29,4 @@ commEval n = let
 main :: IO ()
 main = do
     expr <- getLine
-    (putStr . format) (commEval (commParse expr))
+    (putStr . formatStore) (commEval (commParse expr))

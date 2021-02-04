@@ -52,8 +52,7 @@ varAssignExpr = do
     skipSpaces
     string ":="
     skipSpaces
-    aExpr <- arithExpr
-    return (VarAssignExpr v aExpr)
+    VarAssignExpr v <$> arithExpr
 
 arrAssignExpr :: ReadP CommAST
 arrAssignExpr = do
@@ -64,8 +63,7 @@ arrAssignExpr = do
     skipSpaces
     string ":="
     skipSpaces
-    aExpr <- arithExpr
-    return (ArrAssignExpr v i aExpr)
+    ArrAssignExpr v i <$> arithExpr
 
 ifExpr :: ReadP CommAST
 ifExpr = do

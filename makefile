@@ -1,5 +1,5 @@
 BIN = while-ss
-FILE = EvalCommBigStep
+FILE = EvalCommSmallStep
 
 $(BIN): $(FILE).hs
 	ghc $(FILE).hs -o $(BIN)
